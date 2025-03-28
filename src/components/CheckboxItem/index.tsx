@@ -1,21 +1,18 @@
-import { Box, Button, Fieldset, Flex, Stack, Text } from '@chakra-ui/react';
+import { Box, Button, Fieldset, Flex, Show, Stack, Text } from '@chakra-ui/react';
 import { Radio, RadioGroup } from '@/components/ui/radio';
 import { Data } from '@/types';
 import { ValueChangeDetails } from '@zag-js/radio-group';
 import { useEffect, useState } from 'react';
 import { IoIosArrowForward, IoIosArrowBack } from 'react-icons/io';
-
-type AnswerEntry = {
-  questionId: number;
-  value: string;
-};
+import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
 
 export const CheckboxItem = ({ questions }: Data) => {
+  const { user } = useUser()
   const [titleIndex, setTitleIndex] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<number, string>>(
     {}
   );
-  const [allAnswers, setAllAnswers] = useState<AnswerEntry[]>([]);
 
   const handleCheckedChange = (
     questionId: number,
@@ -48,7 +45,7 @@ export const CheckboxItem = ({ questions }: Data) => {
   const filteredQuestions = questions?.filter((q) => q.title === currentTitle);
 
   const allAnswered = filteredQuestions?.every((question) =>
-    question.items.every((item) => answers[+item.number] != null)
+    question.items?.every((item) => answers[+item.number] != null)
   );
   
 
@@ -64,18 +61,25 @@ export const CheckboxItem = ({ questions }: Data) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [titleIndex]);
 
-  useEffect(() => {
-    const latestAnswers = Object.entries(answers).map(([questionId, value]) => ({
-      questionId: Number(questionId),
-      value,
-    }));
-    setAllAnswers(latestAnswers);
-  }, [answers]);
+  const saveChecklist = async () => {
+    const checklistData = {
+      questions: questions?.map((q) => ({
+        clerkId: user?.id,
+        title: q.title,
+        items: q.items?.map((item) => ({
+          number: item.number,
+          text: item.text,
+          score: answers[item.number] ? [answers[item.number]] : [], // Aquí se guardan los scores seleccionados
+        })),
+      })),
+    }
 
-
-  const allAnswerJson = JSON.stringify(allAnswers);
-
-  console.log(allAnswerJson);
+    try {
+      await axios.post('http://localhost:4000/checklist', checklistData)
+    } catch (error) {
+      console.log(error)
+    }
+  } 
 
   return (
     <Fieldset.Root mt={'2rem'} bg={'#1f2937'} rounded={'xl'} p={8}>
@@ -88,7 +92,7 @@ export const CheckboxItem = ({ questions }: Data) => {
             * Obligatorio contestar todas las preguntas
           </Fieldset.HelperText>
           <Fieldset.Content>
-            {question.items.map((item) => (
+            {question.items?.map((item) => (
               <Box key={item.number} mb={2}>
                 <Flex py={'1rem'} alignItems={'center'} gap={'10px'}>
                   <Flex justifyContent={'center'} alignItems={'center'}>
@@ -108,7 +112,7 @@ export const CheckboxItem = ({ questions }: Data) => {
                 </Flex>
                 <RadioGroup
                   bg={'#374151'}
-                  defaultValue={null}
+                  defaultValue={"3"}
                   size={{ base: 'sm', md: 'md', lg: 'lg' }}
                   variant={'outline'}
                   gap={'10px'}
@@ -117,14 +121,14 @@ export const CheckboxItem = ({ questions }: Data) => {
                   colorPalette={'yellow'}
                   p={6}
                   onValueChange={(value) =>
-                    handleCheckedChange(+item.number, value)
+                    handleCheckedChange(item.number, value)
                   }
                 >
                   <Stack
                     border={'none'}
                     direction={{ base: 'column', lg: 'row' }}
                   >
-                    {item.score.map((score) => (
+                    {item.score?.map((score) => (
                       <Radio
                         key={score}
                         value={score.toString()}
@@ -159,12 +163,20 @@ export const CheckboxItem = ({ questions }: Data) => {
           colorPalette={'yellow'}
           onClick={nextTitle}
           rounded={'full'}
-          disabled={!allAnswered}
+          disabled={allAnswered}
           size={{ base: 'md', md: 'lg' }}
         >
           <IoIosArrowForward />
         </Button>
       </Flex>
+      <Show when={ currentTitle === 'Disfruto' }>
+        <Button
+          onClick={saveChecklist}
+        >
+          Enviar Prueba
+        </Button>
+      </Show>
+        
     </Fieldset.Root>
   );
 };

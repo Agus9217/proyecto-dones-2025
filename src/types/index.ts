@@ -1,25 +1,39 @@
-export interface DataInterface {
-  user: Data | undefined;
-}
 
 export interface Data {
-  name?:      string;
-  lastName?:  string;
-  email?:     string[];
-  questions?: Question[];
-  leaderQuestions?: Question[];
+  status?:    string | undefined;
+  questions?: Question[] | undefined;
 }
 
 export interface Question {
   _id:       string;
   title:     string;
-  items:     Item[];
+  items:     Item[] | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface Item {
-  number: number | string;
+  number: number;
   text:   string;
-  score:  number[];
+  score:  number[] | null;
+}
+
+
+export interface LeaderData {
+  status?:    string | undefined;
+  questions?: Question[] | undefined;
+}
+
+export interface Question {
+  _id:       string;
+  title:     string;
+  items:     Item[] | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Item {
+  letter: string
+  text:   string;
+  score:  number[] | null;
 }

@@ -6,7 +6,7 @@ import {
   Text,
   Container,
 } from '@chakra-ui/react';
-import { SignedIn, useAuth, UserButton, useUser } from '@clerk/clerk-react';
+import { SignedIn, UserButton, useUser } from '@clerk/clerk-react';
 import logoImg from '../../assets/img/logo-iglesia.png';
 
 export const Navbar = () => {
